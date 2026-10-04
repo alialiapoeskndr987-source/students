@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ============================================================
 # بناء APK لتطبيق «خطوة صحية» داخل Codespace
-# الناتج: yousef/apk-yousef/apk_output/StepHealth-v0.1-debug.apk
+# الناتج: yousef/apk-yousef/apk_output/StepHealth-v0.2-debug.apk
 # ============================================================
 set -e
 
@@ -48,16 +48,15 @@ APK="app/build/outputs/apk/debug/app-debug.apk"
 
 OUT_DIR="$(dirname "$APP_DIR")/apk_output"
 mkdir -p "$OUT_DIR"
-cp "$APK" "$OUT_DIR/StepHealth-v0.1-debug.apk"
+cp "$APK" "$OUT_DIR/StepHealth-v0.2-debug.apk"
 
 echo ""
 echo "============================================================"
 echo "✓ تم بناء التطبيق بنجاح!"
-echo "  الملف: yousef/apk-yousef/apk_output/StepHealth-v0.1-debug.apk"
+echo "  الملف: yousef/apk-yousef/apk_output/StepHealth-v0.2-debug.apk"
 echo ""
 echo "طرق نقل التطبيق إلى هاتفك:"
-echo "  1) كليك يمين على الملف في مستكشف VS Code ثم Download"
-echo "  2) أو: git add -A && git commit -m 'بناء APK' && git push"
-echo "     ثم افتح المستودع من متصفح الهاتف وحمّل الملف"
+echo "  كليك يمين على الملف في مستكشف VS Code ثم Download"
+echo "  (ملفات APK لا تدخل المستودع حمايةً من التعارض — تُبنى محليًا في كل إصدار)"
 echo "ثبّت الملف على الهاتف مع السماح بـ«المصادر غير المعروفة»"
 echo "============================================================"

@@ -1,0 +1,5 @@
+# مخرجات البناء لا تدخل المستودع — تُبنى محليًا في الكودسبيس في كل إصدار
+apk_output/*
+!apk_output/.gitkeep
+StepHealthApp/local.properties
+StepHealthApp/.kotlin/
