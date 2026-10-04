@@ -8,7 +8,31 @@ set -e
 APP_DIR="$(cd "$(dirname "$0")/../StepHealthApp" && pwd)"
 cd "$APP_DIR"
 
-export JAVA_HOME="$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")"
+# ---------- اختيار JDK مناسب (Gradle 8.7 يعمل على 17 حتى 21 فقط) ----------
+pick_jdk() {
+    if command -v java >/dev/null 2>&1; then
+        V=$(java -version 2>&1 | head -1 | sed 's/.*"\(.*\)".*/\1/')
+        MAJOR=${V%%.*}
+        case "$MAJOR" in
+            17|18|19|20|21) dirname "$(dirname "$(readlink -f "$(command -v java)")")"; return 0 ;;
+        esac
+    fi
+    for d in /usr/lib/jvm/java-17-openjdk-* /usr/lib/jvm/java-21-openjdk-* \
+             "$HOME"/.sdkman/candidates/java/17* "$HOME"/.sdkman/candidates/java/21*; do
+        [ -x "$d/bin/java" ] && { echo "$d"; return 0; }
+    done
+    return 1
+}
+
+JAVA_HOME="$(pick_jdk || true)"
+if [ -z "$JAVA_HOME" ]; then
+    echo "✗ لم يُوجد JDK 17 — شغّل أولًا: bash yousef/apk-yousef/codespace/setup_android.sh"
+    exit 1
+fi
+export JAVA_HOME
+export PATH="$JAVA_HOME/bin:$PATH"
+echo "Java المستخدمة للبناء: $(java -version 2>&1 | head -1)"
+
 export ANDROID_HOME="$HOME/android-sdk"
 [ -d "$ANDROID_HOME" ] || { echo "✗ لم يُوجد Android SDK — شغّل أولًا: bash yousef/apk-yousef/codespace/setup_android.sh"; exit 1; }
 echo "sdk.dir=$ANDROID_HOME" > local.properties
