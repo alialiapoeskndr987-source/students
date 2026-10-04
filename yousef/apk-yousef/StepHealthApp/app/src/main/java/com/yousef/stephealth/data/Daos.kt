@@ -39,6 +39,15 @@ interface PatientDao {
     @Query("SELECT * FROM patients WHERE project_id = :projectId ORDER BY id DESC")
     fun byProject(projectId: Long): Flow<List<PatientEntity>>
 
+    @Query("SELECT * FROM patients WHERE project_id = :projectId ORDER BY id")
+    suspend fun listForProject(projectId: Long): List<PatientEntity>
+
+    @Query("SELECT * FROM patients WHERE id = :id")
+    fun byId(id: Long): Flow<PatientEntity?>
+
+    @Query("SELECT * FROM patients WHERE id = :id")
+    suspend fun byIdOnce(id: Long): PatientEntity?
+
     @Query("SELECT COUNT(*) FROM patients WHERE project_id = :projectId AND name = :name")
     suspend fun countName(projectId: Long, name: String): Int
 
@@ -61,6 +70,40 @@ interface MeasurementDao {
 
     @Insert
     suspend fun insert(m: MeasurementEntity): Long
+
+    /** قياس واحد لكل يوم لكل مريض — UNIQUE(patient_id, date) — التعديل يستبدل القيمة نفسها */
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsert(m: MeasurementEntity): Long
+
+    @Query("DELETE FROM measurements WHERE id = :id")
+    suspend fun deleteById(id: Long)
+
+    @Query("SELECT * FROM measurements WHERE patient_id = :patientId ORDER BY date")
+    fun byPatient(patientId: Long): Flow<List<MeasurementEntity>>
+
+    @Query("SELECT * FROM measurements WHERE patient_id = :patientId ORDER BY date")
+    suspend fun listForPatient(patientId: Long): List<MeasurementEntity>
+
+    @Query("SELECT * FROM measurements WHERE patient_id IN (SELECT id FROM patients WHERE project_id = :projectId) ORDER BY date")
+    fun byProject(projectId: Long): Flow<List<MeasurementEntity>>
+
+    @Query("SELECT * FROM measurements WHERE patient_id IN (SELECT id FROM patients WHERE project_id = :projectId) ORDER BY date")
+    suspend fun listForProject(projectId: Long): List<MeasurementEntity>
+
+    @Query("SELECT * FROM measurements WHERE patient_id = :patientId AND date = :date")
+    suspend fun findForDay(patientId: Long, date: String): MeasurementEntity?
+
+    @Query(
+        "SELECT patient_id FROM measurements WHERE date = :date AND patient_id IN " +
+            "(SELECT id FROM patients WHERE project_id = :projectId)"
+    )
+    fun measuredIdsOn(projectId: Long, date: String): Flow<List<Long>>
+
+    @Query(
+        "SELECT patient_id FROM measurements WHERE date = :date AND patient_id IN " +
+            "(SELECT id FROM patients WHERE project_id = :projectId)"
+    )
+    suspend fun measuredIdsOnOnce(projectId: Long, date: String): List<Long>
 
     @Query("SELECT COUNT(*) FROM measurements WHERE patient_id = :patientId")
     suspend fun countForPatient(patientId: Long): Int

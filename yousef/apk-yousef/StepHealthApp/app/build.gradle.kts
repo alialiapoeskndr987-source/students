@@ -13,8 +13,8 @@ android {
         applicationId = "com.yousef.stephealth"
         minSdk = 26
         targetSdk = 34
-        versionCode = 2
-        versionName = "0.2"
+        versionCode = 21
+        versionName = "2.1"
     }
 
     buildTypes {
@@ -48,6 +48,9 @@ dependencies {
     implementation("androidx.room:room-runtime:$roomVersion")
     implementation("androidx.room:room-ktx:$roomVersion")
     ksp("androidx.room:room-compiler:$roomVersion")
+
+    // التنبيه اليومي (البند 7 من المتطلبات)
+    implementation("androidx.work:work-runtime-ktx:2.9.1")
 }
 
 ksp {

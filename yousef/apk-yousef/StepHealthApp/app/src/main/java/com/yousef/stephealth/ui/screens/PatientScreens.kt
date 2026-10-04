@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yousef.stephealth.data.AppDatabase
 import com.yousef.stephealth.data.PatientEntity
+import com.yousef.stephealth.ui.components.Sparkline
 import com.yousef.stephealth.ui.theme.Navy
 import com.yousef.stephealth.ui.theme.Orange
 import com.yousef.stephealth.ui.theme.OrangeDeep
@@ -423,11 +424,16 @@ fun AddPatientScreen(projectId: Long, onBack: () -> Unit) {
 /* ---------------- قائمة المرضى (مع حذف بتأكيد مزدوج) ---------------- */
 
 @Composable
-fun PatientsScreen(projectId: Long, onBack: () -> Unit) {
+fun PatientsScreen(
+    projectId: Long,
+    onBack: () -> Unit,
+    onOpenPatient: (Long) -> Unit
+) {
     val context = LocalContext.current
     val db = remember(context) { AppDatabase.get(context) }
     val scope = rememberCoroutineScope()
     val patients by db.patientDao().byProject(projectId).collectAsState(initial = emptyList())
+    val measurements by db.measurementDao().byProject(projectId).collectAsState(initial = emptyList())
 
     var firstConfirm by remember { mutableStateOf<PatientEntity?>(null) }
     var finalConfirm by remember { mutableStateOf<PatientEntity?>(null) }
@@ -470,7 +476,17 @@ fun PatientsScreen(projectId: Long, onBack: () -> Unit) {
             }
         }
         patients.forEach { patient ->
-            PatientCard(patient = patient, onDelete = { firstConfirm = patient })
+            PatientCard(
+                patient = patient,
+                sparkValues = remember(measurements, patient.id) {
+                    measurements.filter { it.patientId == patient.id }
+                        .sortedBy { it.date }
+                        .takeLast(30)
+                        .map { it.valueMgdl }
+                },
+                onDelete = { firstConfirm = patient },
+                onOpen = { onOpenPatient(patient.id) }
+            )
             Spacer(Modifier.height(10.dp))
         }
         Spacer(Modifier.height(24.dp))
@@ -511,8 +527,14 @@ fun PatientsScreen(projectId: Long, onBack: () -> Unit) {
 }
 
 @Composable
-private fun PatientCard(patient: PatientEntity, onDelete: () -> Unit) {
+private fun PatientCard(
+    patient: PatientEntity,
+    sparkValues: List<Double>,
+    onDelete: () -> Unit,
+    onOpen: () -> Unit
+) {
     Card(
+        onClick = onOpen,
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
@@ -539,6 +561,19 @@ private fun PatientCard(patient: PatientEntity, onDelete: () -> Unit) {
                         tint = Color(0xFFDC2626)
                     )
                 }
+            }
+            if (sparkValues.size >= 2) {
+                Spacer(Modifier.height(6.dp))
+                Sparkline(
+                    values = sparkValues,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(26.dp)
+                )
+                Text(
+                    "آخر ${sparkValues.size} قياسًا — ${fmt1(sparkValues.last())} mg/dL",
+                    fontSize = 11.sp, color = SlateGray
+                )
             }
             val parts = buildList {
                 patient.age?.let { add("العمر: $it") }

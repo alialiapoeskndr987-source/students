@@ -16,6 +16,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -37,8 +38,11 @@ import androidx.compose.ui.unit.sp
 import com.yousef.stephealth.data.AppDatabase
 import com.yousef.stephealth.data.PatientEntity
 import com.yousef.stephealth.data.ProjectEntity
+import com.yousef.stephealth.data.daysBetween
+import com.yousef.stephealth.data.todayIso
 import com.yousef.stephealth.ui.theme.Navy
 import com.yousef.stephealth.ui.theme.Orange
+import com.yousef.stephealth.ui.theme.OrangeDeep
 import com.yousef.stephealth.ui.theme.SlateGray
 import kotlinx.coroutines.launch
 
@@ -148,12 +152,18 @@ fun ProjectScreen(
     projectId: Long,
     onBack: () -> Unit,
     onAddPatient: () -> Unit,
-    onOpenPatients: () -> Unit
+    onOpenPatients: () -> Unit,
+    onOpenMeasurements: () -> Unit,
+    onOpenResults: () -> Unit
 ) {
     val context = LocalContext.current
     val db = remember(context) { AppDatabase.get(context) }
+    val scope = rememberCoroutineScope()
     val project by db.projectDao().byId(projectId).collectAsState(initial = null)
     val patients by db.patientDao().byProject(projectId).collectAsState(initial = emptyList())
+    val today = todayIso()
+    val measuredToday by db.measurementDao()
+        .measuredIdsOn(projectId, today).collectAsState(initial = emptyList())
 
     val sportsCount = patients.count { it.groupType == PatientEntity.GROUP_SPORTS }
     val controlCount = patients.count { it.groupType == PatientEntity.GROUP_CONTROL }
@@ -196,25 +206,88 @@ fun ProjectScreen(
                     InfoLine("المدة", "${p.durationDays / 7} أسبوعًا (${p.durationDays} يومًا)")
                     InfoLine("تاريخ الإنشاء", p.createdAt.take(10))
                     InfoLine("المرضى", "${patients.size} — رياضية: $sportsCount / ضابطة: $controlCount")
+                    if (patients.isNotEmpty()) {
+                        InfoLine(
+                            "قياسات اليوم",
+                            "${measuredToday.size} من ${patients.size} — الالتزام: " +
+                                if (patients.isEmpty()) "—" else "${measuredToday.size * 100 / patients.size}%"
+                        )
+                    }
+                    if (p.startDate != null) {
+                        val elapsed = (daysBetween(p.startDate!!, today) + 1)
+                            .coerceIn(0, p.durationDays.toLong()).toInt()
+                        InfoLine(
+                            "سير البرنامج",
+                            "اليوم $elapsed من ${p.durationDays} — " +
+                                if (elapsed >= p.durationDays) "انتهت المدة"
+                                else "المتبقي ${p.durationDays - elapsed} يومًا"
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        LinearProgressIndicator(
+                            progress = { elapsed.toFloat() / p.durationDays },
+                            modifier = Modifier.fillMaxWidth(),
+                            color = OrangeDeep,
+                            trackColor = Color(0xFFF1F5F9)
+                        )
+                    }
                     if (p.status == ProjectEntity.STATUS_PREPARING) {
                         Spacer(Modifier.height(6.dp))
                         Text(
-                            "أضف المرضى عبر الزر أدناه لتجهيز التجربة. ستنطلق حالة «جاري» تلقائيًا مع أول قياس يومي في المرحلة 3 من التطوير.",
+                            "أضف المرضى ثم سجّل أول قياس فعلي — عندها تتحول الحالة تلقائيًا إلى «جاري» ويُضبط تاريخ بداية البرنامج.",
                             fontSize = 13.sp,
                             color = Color(0xFF9A3412)
                         )
                     }
+                    if (p.status == ProjectEntity.STATUS_RUNNING &&
+                        p.startDate != null &&
+                        daysBetween(p.startDate!!, today) + 1 >= p.durationDays
+                    ) {
+                        Spacer(Modifier.height(10.dp))
+                        Button(
+                            onClick = {
+                                scope.launch {
+                                    db.projectDao().updateStatus(projectId, ProjectEntity.STATUS_DONE)
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0E7490))
+                        ) {
+                            Text("إنهاء وتجميع النتائج")
+                        }
+                    }
                 }
             }
             Spacer(Modifier.height(16.dp))
-            Button(
-                onClick = onAddPatient,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Navy)
-            ) {
-                Text("إضافة مريض", fontSize = 16.sp)
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Button(
+                    onClick = onOpenMeasurements,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(52.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Navy)
+                ) {
+                    Text("تسجيل قياسات اليوم", fontSize = 14.sp)
+                }
+            }
+            Spacer(Modifier.height(10.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Button(
+                    onClick = onOpenResults,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(52.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = OrangeDeep)
+                ) {
+                    Text("النتائج والمخططات", fontSize = 14.sp)
+                }
+                Button(
+                    onClick = onAddPatient,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(52.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Navy)
+                ) {
+                    Text("إضافة مريض", fontSize = 14.sp)
+                }
             }
             Spacer(Modifier.height(10.dp))
             OutlinedButton(
@@ -225,29 +298,23 @@ fun ProjectScreen(
             ) {
                 Text("قائمة المرضى (${patients.size})", color = Navy)
             }
-            Spacer(Modifier.height(16.dp))
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF7ED))
-            ) {
-                Column(Modifier.padding(16.dp)) {
-                    Text(
-                        "قادم في المراحل التالية:",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp,
-                        color = Color(0xFF9A3412)
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        "• المرحلة 3: التسجيل اليومي لقياسات السكر (mg/dL) + التنبيه 8 مساءً + التقويم الملون",
-                        fontSize = 13.sp,
-                        color = Color(0xFF475569)
-                    )
-                    Text(
-                        "• المرحلة 4: شاشة النتائج والمخططات ومقارنة الفئتين (إثبات الفرضية)",
-                        fontSize = 13.sp,
-                        color = Color(0xFF475569)
-                    )
+            if (p.startDate == null && patients.isEmpty()) {
+                Spacer(Modifier.height(12.dp))
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF2F7F5))
+                ) {
+                    Column(Modifier.padding(14.dp)) {
+                        Text(
+                            "خطواتك التالية",
+                            fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Navy
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            "1) أضف مرضى المجموعتين عبر «إضافة مريض»\n2) سجّل قياس السكر اليومي لكل مريض (mg/dL)\n3) تابع النتائج والمخططات لحظة بلحظة حتى قبل نهاية البرنامج",
+                            fontSize = 13.sp, color = Color(0xFF475569)
+                        )
+                    }
                 }
             }
         }

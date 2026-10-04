@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ============================================================
-# بناء APK لتطبيق «خطوة صحية» داخل Codespace
-# الناتج: yousef/apk-yousef/apk_output/StepHealth-v0.2-debug.apk
+# بناء APK لتطبيق «صحة رياضية» (SportHealth) داخل Codespace
+# الناتج: yousef/apk-yousef/apk_output/SportHealth-v2.1-debug.apk
 # ============================================================
 set -e
 
@@ -48,12 +48,12 @@ APK="app/build/outputs/apk/debug/app-debug.apk"
 
 OUT_DIR="$(dirname "$APP_DIR")/apk_output"
 mkdir -p "$OUT_DIR"
-cp "$APK" "$OUT_DIR/StepHealth-v0.2-debug.apk"
+cp "$APK" "$OUT_DIR/SportHealth-v2.1-debug.apk"
 
 echo ""
 echo "============================================================"
 echo "✓ تم بناء التطبيق بنجاح!"
-echo "  الملف: yousef/apk-yousef/apk_output/StepHealth-v0.2-debug.apk"
+echo "  الملف: yousef/apk-yousef/apk_output/SportHealth-v2.1-debug.apk"
 echo ""
 echo "طرق نقل التطبيق إلى هاتفك:"
 echo "  كليك يمين على الملف في مستكشف VS Code ثم Download"
