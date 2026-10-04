@@ -198,6 +198,14 @@ object Exports {
             var canvas = page.canvas
             var y = MARGIN
 
+            fun newPage() {
+                doc.finishPage(page)
+                pageNo++
+                page = doc.startPage(android.graphics.pdf.PdfDocument.PageInfo.Builder(PAGE_W, PAGE_H, pageNo).create())
+                canvas = page.canvas
+                y = MARGIN
+            }
+
             fun paragraph(text: String, paint: TextPaint = tp, width: Float = CONTENT_W) {
                 val sl = StaticLayout.Builder
                     .obtain(text, 0, text.length, paint, width.toInt().coerceAtLeast(40))
@@ -212,14 +220,6 @@ object Exports {
                 sl.draw(canvas)
                 canvas.restore()
                 y += sl.height + 6f
-            }
-
-            fun newPage() {
-                doc.finishPage(page)
-                pageNo++
-                page = doc.startPage(android.graphics.pdf.PdfDocument.PageInfo.Builder(PAGE_W, PAGE_H, pageNo).create())
-                canvas = page.canvas
-                y = MARGIN
             }
 
             fun ensure(space: Float) {
@@ -317,7 +317,7 @@ object Exports {
                         num(lastReal) to 280f,
                         num(st.changePct) to 355f,
                         st.missingInWindow.toString() to 420f,
-                        if (st.eligible) "نعم" else "لا" to 470f
+                        (if (st.eligible) "نعم" else "لا") to 470f
                     ),
                     bodyR
                 )
@@ -354,7 +354,7 @@ object Exports {
             color = 0xFF16A34A.toInt(); strokeWidth = 2f; style = Paint.Style.STROKE
         }
         val controlPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = 0xFF475569.toInt(); strokeWidth = 2f; style = Paint.Style.STROKE; pathEffect = android.graphics.DashPathEffect(floatArrayOf(6f, 4f))
+            color = 0xFF475569.toInt(); strokeWidth = 2f; style = Paint.Style.STROKE; pathEffect = android.graphics.DashPathEffect(floatArrayOf(6f, 4f), 0f)
         }
 
         val dates = (sports.map { it.date } + control.map { it.date }).distinct().sorted()

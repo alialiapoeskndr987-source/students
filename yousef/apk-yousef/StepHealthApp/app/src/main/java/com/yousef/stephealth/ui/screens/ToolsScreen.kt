@@ -25,7 +25,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedButtonDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -205,7 +204,7 @@ fun ToolsScreen(onBack: () -> Unit) {
                                 }
                                 toastMsg = "وقت التنبيه: $h:00"
                             },
-                            colors = OutlinedButtonDefaults.outlinedButtonColors(
+                            colors = ButtonDefaults.outlinedButtonColors(
                                 containerColor = if (hour == h) OrangeDeep.copy(alpha = 0.18f) else Color.Transparent,
                                 contentColor = if (hour == h) Navy else SlateGray
                             )

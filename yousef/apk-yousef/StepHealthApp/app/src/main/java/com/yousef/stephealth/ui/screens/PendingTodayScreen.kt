@@ -40,7 +40,6 @@ import com.yousef.stephealth.data.AppDatabase
 import com.yousef.stephealth.data.MeasurementEntity
 import com.yousef.stephealth.data.PatientEntity
 import com.yousef.stephealth.data.ProjectEntity
-import com.yousef.stephealth.data.nowStamp
 import com.yousef.stephealth.data.todayIso
 import com.yousef.stephealth.ui.theme.Navy
 import com.yousef.stephealth.ui.theme.SlateGray

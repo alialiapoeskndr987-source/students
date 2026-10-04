@@ -378,13 +378,13 @@ fun DistributionChart(points: List<DistributionPoint>, modifier: Modifier = Modi
             val x = padL + slot * i + (slot - barW) / 2
             var yTop: Double = (padT + plotH).toDouble()
             val segments = listOf(
-                Triple(dp.improvedPct, ChartGreen),
-                Triple(dp.flatPct, ChartGray),
-                Triple(dp.rosePct, ChartRed)
+                dp.improvedPct to ChartGreen,
+                dp.flatPct to ChartGray,
+                dp.rosePct to ChartRed
             )
             segments.forEach { (pct, color) ->
-                val h = plotH * pct / 100.0
-                if (h > 0.5f) {
+                val h = plotH.toDouble() * pct / 100.0
+                if (h > 0.5) {
                     drawRect(
                         color,
                         topLeft = Offset(x, (yTop - h).toFloat()),

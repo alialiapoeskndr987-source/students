@@ -59,7 +59,6 @@ import com.yousef.stephealth.data.addDaysIso
 import com.yousef.stephealth.data.daysBetween
 import com.yousef.stephealth.data.isoOf
 import com.yousef.stephealth.data.monthGridOf
-import com.yousef.stephealth.data.nowStamp
 import com.yousef.stephealth.data.parseIso
 import com.yousef.stephealth.data.todayIso
 import com.yousef.stephealth.logic.Stats
